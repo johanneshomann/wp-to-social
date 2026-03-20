@@ -1,0 +1,398 @@
+/**
+ * WP to Social — Admin Styles
+ * Clean, minimal, card-based layout.
+ */
+
+/* Layout */
+.wpts-wrap {
+	max-width: 960px;
+}
+
+.wpts-settings-layout {
+	display: flex;
+	gap: 24px;
+	margin-top: 16px;
+}
+
+/* Tab Navigation */
+.wpts-tabs {
+	display: flex;
+	flex-direction: column;
+	min-width: 160px;
+	gap: 2px;
+}
+
+.wpts-tab {
+	display: block;
+	padding: 10px 16px;
+	text-decoration: none;
+	color: #50575e;
+	border-radius: 6px;
+	font-size: 13px;
+	font-weight: 500;
+	transition: background 0.15s, color 0.15s;
+}
+
+.wpts-tab:hover {
+	background: #f0f0f1;
+	color: #1d2327;
+}
+
+.wpts-tab--active {
+	background: #2271b1;
+	color: #fff;
+}
+
+.wpts-tab--active:hover {
+	background: #135e96;
+	color: #fff;
+}
+
+/* Tab Content */
+.wpts-tab-content {
+	flex: 1;
+	min-width: 0;
+}
+
+/* Module Cards */
+.wpts-modules {
+	display: grid;
+	gap: 16px;
+}
+
+.wpts-module-card {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	padding: 20px 24px;
+}
+
+.wpts-module-card--active {
+	border-color: #2271b1;
+	border-width: 2px;
+	padding: 19px 23px; /* Compensate for border width */
+}
+
+.wpts-module-card--coming-soon {
+	opacity: 0.5;
+	border-style: dashed;
+}
+
+.wpts-module-card__header {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.wpts-module-card__icon {
+	font-size: 24px;
+	width: 24px;
+	height: 24px;
+	color: #50575e;
+}
+
+.wpts-module-card--active .wpts-module-card__icon {
+	color: #2271b1;
+}
+
+.wpts-module-card__title {
+	margin: 0;
+	font-size: 15px;
+	font-weight: 600;
+	flex: 1;
+}
+
+.wpts-module-card__desc {
+	margin: 8px 0 0;
+	color: #646970;
+	font-size: 13px;
+}
+
+.wpts-module-card__account {
+	margin: 12px 0 0;
+	font-size: 13px;
+	color: #50575e;
+}
+
+.wpts-module-card__actions {
+	margin-top: 16px;
+	display: flex;
+	gap: 8px;
+}
+
+/* Status indicators */
+.wpts-status {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	font-size: 12px;
+	font-weight: 500;
+	padding: 2px 10px;
+	border-radius: 12px;
+}
+
+.wpts-status::before {
+	content: "";
+	display: inline-block;
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+}
+
+.wpts-status--connected {
+	color: #00a32a;
+	background: #edfaef;
+}
+
+.wpts-status--connected::before {
+	background: #00a32a;
+}
+
+.wpts-status--disconnected {
+	color: #d63638;
+	background: #fce5e5;
+}
+
+.wpts-status--disconnected::before {
+	background: #d63638;
+}
+
+.wpts-status--inactive {
+	color: #646970;
+	background: #f0f0f1;
+}
+
+.wpts-status--inactive::before {
+	background: #a7aaad;
+}
+
+.wpts-status--expired {
+	color: #dba617;
+	background: #fef8e7;
+}
+
+.wpts-status--expired::before {
+	background: #dba617;
+}
+
+/* Credentials Form */
+.wpts-credentials-form {
+	margin-top: 16px;
+}
+
+.wpts-field {
+	margin-bottom: 12px;
+}
+
+.wpts-field label {
+	display: block;
+	font-weight: 500;
+	margin-bottom: 4px;
+	font-size: 13px;
+}
+
+.wpts-help-text {
+	margin-top: 12px;
+	font-size: 12px;
+	color: #646970;
+}
+
+.wpts-help-text code {
+	font-size: 11px;
+	padding: 2px 6px;
+	background: #f0f0f1;
+	border-radius: 3px;
+	word-break: break-all;
+}
+
+/* Sections */
+.wpts-section {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	padding: 20px 24px;
+	margin-bottom: 16px;
+}
+
+.wpts-section h3 {
+	margin: 0 0 16px;
+	font-size: 14px;
+	font-weight: 600;
+}
+
+/* Checkbox list */
+.wpts-checkbox-list {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.wpts-checkbox-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 12px;
+	border-radius: 6px;
+	cursor: pointer;
+	transition: background 0.1s;
+}
+
+.wpts-checkbox-item:hover {
+	background: #f6f7f7;
+}
+
+.wpts-checkbox-label {
+	font-size: 13px;
+}
+
+.wpts-checkbox-slug {
+	color: #a7aaad;
+	font-size: 12px;
+	margin-left: 4px;
+}
+
+/* CPT selector */
+.wpts-cpt-selector {
+	margin-bottom: 16px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.wpts-cpt-selector label {
+	font-weight: 500;
+	font-size: 13px;
+}
+
+/* Mapping table */
+.wpts-mapping-table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.wpts-mapping-table th {
+	text-align: left;
+	padding: 10px 12px;
+	border-bottom: 2px solid #dcdcde;
+	font-size: 12px;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	color: #646970;
+	font-weight: 600;
+}
+
+.wpts-mapping-table td {
+	padding: 10px 12px;
+	border-bottom: 1px solid #f0f0f1;
+	vertical-align: middle;
+}
+
+.wpts-mapping-table select {
+	width: 100%;
+	max-width: 320px;
+}
+
+/* Activity */
+.wpts-activity-filters {
+	margin: 16px 0;
+}
+
+.wpts-activity-filters form {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+
+.wpts-activity-table .column-platform,
+.wpts-activity-table .column-status,
+.wpts-activity-table .column-actions {
+	width: 120px;
+}
+
+.wpts-activity-table .column-date {
+	width: 160px;
+}
+
+.wpts-post-type-badge {
+	display: inline-block;
+	font-size: 11px;
+	color: #646970;
+	background: #f0f0f1;
+	padding: 1px 8px;
+	border-radius: 10px;
+	margin-left: 6px;
+	vertical-align: middle;
+}
+
+/* Status dots */
+.wpts-status-dot {
+	display: inline-block;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	margin-right: 4px;
+	vertical-align: middle;
+}
+
+.wpts-status-dot--success { background: #00a32a; }
+.wpts-status-dot--failed  { background: #d63638; }
+.wpts-status-dot--pending { background: #dba617; }
+
+.wpts-error-message {
+	margin: 4px 0 0;
+	font-size: 12px;
+	color: #8c8f94;
+	font-style: italic;
+}
+
+/* Empty state */
+.wpts-empty-state {
+	text-align: center;
+	padding: 40px 20px;
+	color: #646970;
+}
+
+.wpts-empty-state .dashicons {
+	font-size: 48px;
+	width: 48px;
+	height: 48px;
+	color: #dcdcde;
+	margin-bottom: 12px;
+}
+
+.wpts-empty-state p {
+	font-size: 14px;
+	margin: 0;
+}
+
+/* Disconnect button */
+.wpts-btn-disconnect {
+	color: #d63638 !important;
+	border-color: #d63638 !important;
+}
+
+.wpts-btn-disconnect:hover {
+	background: #d63638 !important;
+	color: #fff !important;
+}
+
+/* Responsive */
+@media (max-width: 782px) {
+	.wpts-settings-layout {
+		flex-direction: column;
+	}
+
+	.wpts-tabs {
+		flex-direction: row;
+		min-width: 0;
+	}
+
+	.wpts-activity-filters form {
+		flex-wrap: wrap;
+	}
+
+	.wpts-activity-table .column-platform,
+	.wpts-activity-table .column-date {
+		display: none;
+	}
+}
