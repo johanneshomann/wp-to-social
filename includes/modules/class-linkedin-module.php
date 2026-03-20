@@ -47,6 +47,36 @@ class WPTS_LinkedIn_Module {
 	}
 
 	/**
+	 * Step-by-step setup instructions shown in the module card accordion.
+	 *
+	 * @return array
+	 */
+	public function get_setup_steps() {
+		return array(
+			array(
+				'title' => __( 'Create a LinkedIn App', 'wp-to-social' ),
+				'desc'  => __( 'Go to the <a href="https://www.linkedin.com/developers/apps/new" target="_blank" rel="noopener">LinkedIn Developer Portal</a> and click "Create App". Fill in your app name, your LinkedIn Page, and upload a logo.', 'wp-to-social' ),
+			),
+			array(
+				'title' => __( 'Add the required products', 'wp-to-social' ),
+				'desc'  => __( 'In your app dashboard, go to the "Products" tab. Request access to <strong>Sign In with LinkedIn using OpenID Connect</strong> and <strong>Share on LinkedIn</strong>. Both should be approved instantly.', 'wp-to-social' ),
+			),
+			array(
+				'title' => __( 'Copy your credentials', 'wp-to-social' ),
+				'desc'  => __( 'Go to the "Auth" tab in your LinkedIn app. Copy the <strong>Client ID</strong> and <strong>Client Secret</strong>, then paste them into the fields above and click <strong>Save Credentials</strong>.', 'wp-to-social' ),
+			),
+			array(
+				'title' => __( 'Set the Redirect URI', 'wp-to-social' ),
+				'desc'  => __( 'Still on the "Auth" tab, scroll to "OAuth 2.0 settings". Click "Add redirect URL" and paste the <strong>Redirect URI</strong> shown below the Save button on this page.', 'wp-to-social' ),
+			),
+			array(
+				'title' => __( 'Connect your account', 'wp-to-social' ),
+				'desc'  => __( 'Click the <strong>Connect with LinkedIn</strong> button that appears after saving your credentials. You will be redirected to LinkedIn to authorize access. Once approved, you are all set!', 'wp-to-social' ),
+			),
+		);
+	}
+
+	/**
 	 * Get platform fields that can be mapped.
 	 *
 	 * @return array

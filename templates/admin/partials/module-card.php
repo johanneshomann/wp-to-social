@@ -70,6 +70,33 @@ $modules = $this->registry->get_all();
 				</div>
 
 			<?php else : ?>
+				<?php
+				$setup_steps = method_exists( $module, 'get_setup_steps' ) ? $module->get_setup_steps() : array();
+				$allowed_html = array(
+					'a'      => array( 'href' => array(), 'target' => array(), 'rel' => array() ),
+					'strong' => array(),
+					'code'   => array(),
+				);
+				if ( ! empty( $setup_steps ) ) : ?>
+					<div class="wpts-setup-guide">
+						<button type="button" class="wpts-setup-guide__toggle" aria-expanded="false">
+							<span class="dashicons dashicons-editor-help"></span>
+							<?php esc_html_e( 'How to connect', 'wp-to-social' ); ?>
+							<span class="dashicons dashicons-arrow-down-alt2 wpts-setup-guide__arrow"></span>
+						</button>
+						<div class="wpts-setup-guide__content" hidden>
+							<ol class="wpts-setup-guide__steps">
+								<?php foreach ( $setup_steps as $i => $step ) : ?>
+									<li>
+										<strong><?php echo esc_html( $step['title'] ); ?></strong>
+										<p><?php echo wp_kses( $step['desc'], $allowed_html ); ?></p>
+									</li>
+								<?php endforeach; ?>
+							</ol>
+						</div>
+					</div>
+				<?php endif; ?>
+
 				<!-- Credentials form -->
 				<form method="post" class="wpts-credentials-form">
 					<?php wp_nonce_field( 'wpts_save_credentials' ); ?>

@@ -4,6 +4,16 @@
 (function ($) {
 	'use strict';
 
+	// Setup guide accordion toggle.
+	$(document).on('click', '.wpts-setup-guide__toggle', function () {
+		var $btn = $(this);
+		var $content = $btn.next('.wpts-setup-guide__content');
+		var expanded = $btn.attr('aria-expanded') === 'true';
+
+		$btn.attr('aria-expanded', !expanded);
+		$content.prop('hidden', expanded);
+	});
+
 	// Disconnect confirmation.
 	$(document).on('click', '[data-confirm="disconnect"]', function (e) {
 		if (!confirm(wpts.i18n.confirm_disconnect)) {

@@ -50,6 +50,48 @@ class WPTS_Instagram_Module {
 	}
 
 	/**
+	 * Step-by-step setup instructions shown in the module card accordion.
+	 *
+	 * @return array
+	 */
+	public function get_setup_steps() {
+		return array(
+			array(
+				'title' => __( 'Switch to an Instagram Business or Creator account', 'wp-to-social' ),
+				'desc'  => __( 'Open the Instagram app, go to <strong>Settings > Account > Switch to professional account</strong> and choose Business or Creator. A personal account will not work.', 'wp-to-social' ),
+			),
+			array(
+				'title' => __( 'Link Instagram to a Facebook Page', 'wp-to-social' ),
+				'desc'  => __( 'In the Instagram app, go to <strong>Settings > Account > Linked Accounts > Facebook</strong> and connect it to a Facebook Page you manage. This is required by Meta\'s API.', 'wp-to-social' ),
+			),
+			array(
+				'title' => __( 'Create a Meta App', 'wp-to-social' ),
+				'desc'  => __( 'Go to <a href="https://developers.facebook.com/apps/create/" target="_blank" rel="noopener">Meta for Developers</a> and create a new app. Choose the "Business" type when asked.', 'wp-to-social' ),
+			),
+			array(
+				'title' => __( 'Add Instagram Graph API', 'wp-to-social' ),
+				'desc'  => __( 'In your Meta app dashboard, find "Add Product" and add the <strong>Instagram Graph API</strong>.', 'wp-to-social' ),
+			),
+			array(
+				'title' => __( 'Copy your credentials', 'wp-to-social' ),
+				'desc'  => __( 'Go to <strong>Settings > Basic</strong> in your Meta app. Copy the <strong>App ID</strong> and <strong>App Secret</strong>, then paste them into the fields above and click <strong>Save Credentials</strong>.', 'wp-to-social' ),
+			),
+			array(
+				'title' => __( 'Set the Redirect URI', 'wp-to-social' ),
+				'desc'  => __( 'In your Meta app, go to <strong>Facebook Login > Settings</strong>. Paste the <strong>Redirect URI</strong> shown below the Save button into "Valid OAuth Redirect URIs" and save.', 'wp-to-social' ),
+			),
+			array(
+				'title' => __( 'Submit for App Review', 'wp-to-social' ),
+				'desc'  => __( 'Under <strong>App Review > Permissions and Features</strong>, request these permissions: <code>instagram_basic</code>, <code>instagram_content_publish</code>, <code>pages_read_engagement</code>, and <code>pages_show_list</code>. During development, you can test with your own account without review.', 'wp-to-social' ),
+			),
+			array(
+				'title' => __( 'Connect your account', 'wp-to-social' ),
+				'desc'  => __( 'Click the <strong>Connect with Instagram</strong> button that appears after saving your credentials. You will be redirected to Facebook to authorize. Once approved, your Instagram Business account will be detected automatically.', 'wp-to-social' ),
+			),
+		);
+	}
+
+	/**
 	 * Get platform fields that can be mapped.
 	 *
 	 * @return array
