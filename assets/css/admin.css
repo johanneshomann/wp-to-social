@@ -464,6 +464,130 @@
 	color: #fff !important;
 }
 
+/* Help Tab */
+.wpts-help-section {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	padding: 20px 24px;
+	margin-bottom: 16px;
+}
+
+.wpts-help-section h2 {
+	margin: 0 0 12px;
+	font-size: 16px;
+	font-weight: 600;
+	color: #1d2327;
+}
+
+.wpts-help-section p {
+	font-size: 13px;
+	line-height: 1.7;
+	color: #50575e;
+	margin: 0 0 12px;
+}
+
+.wpts-help-section p:last-child {
+	margin-bottom: 0;
+}
+
+.wpts-help-steps {
+	margin: 0 0 12px;
+	padding-left: 24px;
+}
+
+.wpts-help-steps li {
+	font-size: 13px;
+	line-height: 1.7;
+	color: #50575e;
+	margin-bottom: 6px;
+}
+
+.wpts-help-card {
+	background: #f6f7f7;
+	border-radius: 6px;
+	padding: 14px 18px;
+	margin-bottom: 12px;
+}
+
+.wpts-help-card:last-child {
+	margin-bottom: 0;
+}
+
+.wpts-help-card h3 {
+	margin: 0 0 6px;
+	font-size: 14px;
+	font-weight: 600;
+	color: #1d2327;
+}
+
+.wpts-help-card p {
+	margin: 0 0 6px;
+}
+
+.wpts-help-card p:last-child {
+	margin-bottom: 0;
+}
+
+.wpts-help-mapping-table {
+	width: 100%;
+	border-collapse: collapse;
+	margin: 12px 0;
+	font-size: 13px;
+}
+
+.wpts-help-mapping-table th {
+	text-align: left;
+	padding: 8px 12px;
+	border-bottom: 2px solid #dcdcde;
+	font-size: 12px;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	color: #646970;
+	font-weight: 600;
+}
+
+.wpts-help-mapping-table td {
+	padding: 8px 12px;
+	border-bottom: 1px solid #f0f0f1;
+	color: #50575e;
+	line-height: 1.5;
+}
+
+.wpts-help-mapping-table code {
+	font-size: 11px;
+	padding: 1px 5px;
+	background: #f0f0f1;
+	border-radius: 3px;
+}
+
+.wpts-help-notice {
+	background: #fef8e7;
+	border-left: 4px solid #dba617;
+	padding: 10px 14px;
+	margin: 12px 0;
+	font-size: 13px;
+	line-height: 1.6;
+	color: #50575e;
+	border-radius: 0 4px 4px 0;
+}
+
+.wpts-help-notice strong {
+	color: #1d2327;
+}
+
+.wpts-help-tips {
+	margin: 0;
+	padding-left: 20px;
+}
+
+.wpts-help-tips li {
+	font-size: 13px;
+	line-height: 1.7;
+	color: #50575e;
+	margin-bottom: 4px;
+}
+
 /* Responsive */
 @media (max-width: 782px) {
 	.wpts-settings-layout {
