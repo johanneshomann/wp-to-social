@@ -588,6 +588,66 @@
 	margin-bottom: 4px;
 }
 
+/* Info Tab */
+.wpts-info-section {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	padding: 20px 24px;
+	margin-bottom: 16px;
+}
+
+.wpts-info-section h2 {
+	margin: 0 0 12px;
+	font-size: 16px;
+	font-weight: 600;
+	color: #1d2327;
+}
+
+.wpts-info-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 13px;
+}
+
+.wpts-info-table th {
+	text-align: left;
+	padding: 8px 12px 8px 0;
+	color: #646970;
+	font-weight: 500;
+	width: 160px;
+	vertical-align: top;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.wpts-info-table td {
+	padding: 8px 0;
+	color: #1d2327;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.wpts-info-table tr:last-child th,
+.wpts-info-table tr:last-child td {
+	border-bottom: none;
+}
+
+.wpts-info-table a {
+	color: #2271b1;
+	text-decoration: none;
+}
+
+.wpts-info-table a:hover {
+	text-decoration: underline;
+}
+
+.wpts-info-ok {
+	color: #00a32a;
+}
+
+.wpts-info-warn {
+	color: #d63638;
+}
+
 /* Responsive */
 @media (max-width: 782px) {
 	.wpts-settings-layout {

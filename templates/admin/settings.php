@@ -13,6 +13,7 @@ $tabs = array(
 	'post-types'    => __( 'Post Types', 'wp-to-social' ),
 	'field-mapping' => __( 'Field Mapping', 'wp-to-social' ),
 	'help'          => __( 'Help', 'wp-to-social' ),
+	'info'          => __( 'Information', 'wp-to-social' ),
 );
 
 $saved = isset( $_GET['saved'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -48,6 +49,10 @@ $saved = isset( $_GET['saved'] ); // phpcs:ignore WordPress.Security.NonceVerifi
 
 				case 'help':
 					include WPTS_PLUGIN_DIR . 'templates/admin/partials/help.php';
+					break;
+
+				case 'info':
+					include WPTS_PLUGIN_DIR . 'templates/admin/partials/info.php';
 					break;
 
 				default:
