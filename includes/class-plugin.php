@@ -33,6 +33,7 @@ class WPTS_Plugin {
 
 		// Register modules.
 		$this->registry->register( 'linkedin', new WPTS_LinkedIn_Module() );
+		$this->registry->register( 'instagram', new WPTS_Instagram_Module() );
 
 		// Admin.
 		if ( is_admin() ) {

@@ -26,6 +26,27 @@ class WPTS_LinkedIn_Module {
 	}
 
 	/**
+	 * Credential field labels.
+	 *
+	 * @return array
+	 */
+	public function get_credential_labels() {
+		return array(
+			'id'     => __( 'Client ID', 'wp-to-social' ),
+			'secret' => __( 'Client Secret', 'wp-to-social' ),
+		);
+	}
+
+	/**
+	 * Check if API credentials have been saved.
+	 *
+	 * @return bool
+	 */
+	public function has_credentials() {
+		return ! empty( get_option( 'wpts_linkedin_client_id', '' ) );
+	}
+
+	/**
 	 * Get platform fields that can be mapped.
 	 *
 	 * @return array

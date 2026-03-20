@@ -17,6 +17,9 @@ $options = array(
 	'wpts_linkedin_token',
 	'wpts_linkedin_client_id',
 	'wpts_linkedin_client_secret',
+	'wpts_instagram_token',
+	'wpts_instagram_app_id',
+	'wpts_instagram_app_secret',
 	'wpts_db_version',
 );
 

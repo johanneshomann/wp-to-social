@@ -16,11 +16,10 @@ $modules = $this->registry->get_all();
 		$is_active = $this->registry->is_active( $slug );
 		$status    = method_exists( $module, 'get_connection_status' ) ? $module->get_connection_status() : array( 'connected' => false );
 
-		// Get stored credentials to check if they exist.
-		$has_credentials = false;
-		if ( 'linkedin' === $slug ) {
-			$has_credentials = ! empty( get_option( 'wpts_linkedin_client_id', '' ) );
-		}
+		$has_credentials = method_exists( $module, 'has_credentials' ) ? $module->has_credentials() : false;
+		$labels          = method_exists( $module, 'get_credential_labels' )
+			? $module->get_credential_labels()
+			: array( 'id' => __( 'Client ID', 'wp-to-social' ), 'secret' => __( 'Client Secret', 'wp-to-social' ) );
 	?>
 		<div class="wpts-module-card <?php echo $is_active ? 'wpts-module-card--active' : ''; ?>">
 			<div class="wpts-module-card__header">
@@ -78,17 +77,17 @@ $modules = $this->registry->get_all();
 					<input type="hidden" name="wpts_module" value="<?php echo esc_attr( $slug ); ?>" />
 
 					<div class="wpts-field">
-						<label for="wpts_client_id"><?php esc_html_e( 'Client ID', 'wp-to-social' ); ?></label>
-						<input type="text" id="wpts_client_id" name="wpts_client_id"
+						<label for="wpts_client_id_<?php echo esc_attr( $slug ); ?>"><?php echo esc_html( $labels['id'] ); ?></label>
+						<input type="text" id="wpts_client_id_<?php echo esc_attr( $slug ); ?>" name="wpts_client_id"
 						       value="<?php echo $has_credentials ? '••••••••' : ''; ?>"
-						       placeholder="<?php esc_attr_e( 'Enter Client ID', 'wp-to-social' ); ?>"
+						       placeholder="<?php echo esc_attr( sprintf( __( 'Enter %s', 'wp-to-social' ), $labels['id'] ) ); ?>"
 						       class="regular-text" autocomplete="off" />
 					</div>
 
 					<div class="wpts-field">
-						<label for="wpts_client_secret"><?php esc_html_e( 'Client Secret', 'wp-to-social' ); ?></label>
-						<input type="password" id="wpts_client_secret" name="wpts_client_secret"
-						       placeholder="<?php esc_attr_e( 'Enter Client Secret', 'wp-to-social' ); ?>"
+						<label for="wpts_client_secret_<?php echo esc_attr( $slug ); ?>"><?php echo esc_html( $labels['secret'] ); ?></label>
+						<input type="password" id="wpts_client_secret_<?php echo esc_attr( $slug ); ?>" name="wpts_client_secret"
+						       placeholder="<?php echo esc_attr( sprintf( __( 'Enter %s', 'wp-to-social' ), $labels['secret'] ) ); ?>"
 						       class="regular-text" autocomplete="off" />
 					</div>
 
@@ -100,7 +99,10 @@ $modules = $this->registry->get_all();
 				<?php if ( $has_credentials ) : ?>
 					<div class="wpts-module-card__actions" style="margin-top:12px;">
 						<a href="<?php echo esc_url( $module->get_auth_url() ); ?>" class="button button-primary">
-							<?php esc_html_e( 'Connect with LinkedIn', 'wp-to-social' ); ?>
+							<?php
+							/* translators: %s: platform name */
+							echo esc_html( sprintf( __( 'Connect with %s', 'wp-to-social' ), $info['name'] ) );
+							?>
 						</a>
 					</div>
 

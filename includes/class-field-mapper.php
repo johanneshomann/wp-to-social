@@ -15,11 +15,16 @@ class WPTS_Field_Mapper {
 	 */
 	public static function get_defaults( $platform ) {
 		$defaults = array(
-			'linkedin' => array(
-				'title'   => 'post_title',
-				'body'    => 'post_content',
-				'url'     => '_permalink',
-				'image'   => '_featured_image',
+			'linkedin'  => array(
+				'title' => 'post_title',
+				'body'  => 'post_content',
+				'url'   => '_permalink',
+				'image' => '_featured_image',
+			),
+			'instagram' => array(
+				'caption'   => 'post_excerpt',
+				'image_url' => '_featured_image',
+				'alt_text'  => '_featured_image_alt',
 			),
 		);
 
@@ -102,6 +107,10 @@ class WPTS_Field_Mapper {
 			case '_featured_image':
 				return get_the_post_thumbnail_url( $post->ID, 'large' ) ?: '';
 
+			case '_featured_image_alt':
+				$thumb_id = get_post_thumbnail_id( $post->ID );
+				return $thumb_id ? ( get_post_meta( $thumb_id, '_wp_attachment_image_alt', true ) ?: '' ) : '';
+
 			default:
 				// Custom field / post meta.
 				return get_post_meta( $post->ID, $wp_field, true ) ?: '';
@@ -116,11 +125,12 @@ class WPTS_Field_Mapper {
 	 */
 	public static function get_available_fields( $post_type ) {
 		$fields = array(
-			'post_title'       => __( 'Post Title', 'wp-to-social' ),
-			'post_content'     => __( 'Post Content (plain text)', 'wp-to-social' ),
-			'post_excerpt'     => __( 'Post Excerpt', 'wp-to-social' ),
-			'_permalink'       => __( 'Permalink (auto)', 'wp-to-social' ),
-			'_featured_image'  => __( 'Featured Image', 'wp-to-social' ),
+			'post_title'           => __( 'Post Title', 'wp-to-social' ),
+			'post_content'         => __( 'Post Content (plain text)', 'wp-to-social' ),
+			'post_excerpt'         => __( 'Post Excerpt', 'wp-to-social' ),
+			'_permalink'           => __( 'Permalink (auto)', 'wp-to-social' ),
+			'_featured_image'      => __( 'Featured Image', 'wp-to-social' ),
+			'_featured_image_alt'  => __( 'Featured Image Alt Text', 'wp-to-social' ),
 		);
 
 		// Add registered meta keys for this post type.

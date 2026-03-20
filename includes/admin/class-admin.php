@@ -112,11 +112,15 @@ class WPTS_Admin {
 		// Success notice after OAuth — only on the plugin settings page.
 		$screen = get_current_screen();
 		if ( $screen && 'toplevel_page_wpts-settings' === $screen->id
-			&& isset( $_GET['wpts_connected'] ) && 'linkedin' === $_GET['wpts_connected'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			printf(
-				'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
-				esc_html__( 'LinkedIn connected successfully!', 'wp-to-social' )
-			);
+			&& isset( $_GET['wpts_connected'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$connected_module = sanitize_text_field( $_GET['wpts_connected'] );
+			if ( $this->registry->get( $connected_module ) ) {
+				printf(
+					'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
+					/* translators: %s: platform name */
+					esc_html( sprintf( __( '%s connected successfully!', 'wp-to-social' ), ucfirst( $connected_module ) ) )
+				);
+			}
 		}
 	}
 

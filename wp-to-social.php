@@ -25,6 +25,7 @@ require_once WPTS_PLUGIN_DIR . 'includes/class-field-mapper.php';
 require_once WPTS_PLUGIN_DIR . 'includes/class-activity-logger.php';
 require_once WPTS_PLUGIN_DIR . 'includes/class-post-handler.php';
 require_once WPTS_PLUGIN_DIR . 'includes/modules/class-linkedin-module.php';
+require_once WPTS_PLUGIN_DIR . 'includes/modules/class-instagram-module.php';
 require_once WPTS_PLUGIN_DIR . 'includes/admin/class-admin.php';
 require_once WPTS_PLUGIN_DIR . 'includes/admin/class-settings-page.php';
 require_once WPTS_PLUGIN_DIR . 'includes/admin/class-activity-page.php';

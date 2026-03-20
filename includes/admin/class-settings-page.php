@@ -34,10 +34,13 @@ class WPTS_Settings_Page {
 			return;
 		}
 
-		// Handle OAuth callback.
-		if ( isset( $_GET['wpts_oauth_callback'] ) && 'linkedin' === $_GET['wpts_oauth_callback'] ) {
-			$this->handle_oauth_callback();
-			return;
+		// Handle OAuth callback (works for any registered module).
+		if ( isset( $_GET['wpts_oauth_callback'] ) ) {
+			$callback_module = sanitize_text_field( $_GET['wpts_oauth_callback'] );
+			if ( $this->registry->get( $callback_module ) ) {
+				$this->handle_oauth_callback( $callback_module );
+				return;
+			}
 		}
 
 		// Handle form submissions.
@@ -71,13 +74,20 @@ class WPTS_Settings_Page {
 	}
 
 	/**
-	 * Handle LinkedIn OAuth callback.
+	 * Handle OAuth callback for any module.
+	 *
+	 * @param string $module_slug The module slug (e.g. 'linkedin', 'instagram').
 	 */
-	private function handle_oauth_callback() {
+	private function handle_oauth_callback( $module_slug ) {
 		if ( isset( $_GET['error'] ) ) {
 			set_transient(
 				'wpts_admin_notice_' . get_current_user_id(),
-				sprintf( __( 'LinkedIn authorization failed: %s', 'wp-to-social' ), mb_substr( sanitize_text_field( $_GET['error_description'] ?? $_GET['error'] ?? '' ), 0, 200 ) ),
+				sprintf(
+					/* translators: 1: platform name, 2: error description */
+					__( '%1$s authorization failed: %2$s', 'wp-to-social' ),
+					ucfirst( $module_slug ),
+					mb_substr( sanitize_text_field( $_GET['error_description'] ?? $_GET['error'] ?? '' ), 0, 200 )
+				),
 				60
 			);
 			wp_safe_redirect( admin_url( 'admin.php?page=wpts-settings' ) );
@@ -91,7 +101,7 @@ class WPTS_Settings_Page {
 			return;
 		}
 
-		$module = $this->registry->get( 'linkedin' );
+		$module = $this->registry->get( $module_slug );
 		if ( ! $module ) {
 			return;
 		}
@@ -106,9 +116,8 @@ class WPTS_Settings_Page {
 			);
 			wp_safe_redirect( admin_url( 'admin.php?page=wpts-settings' ) );
 		} else {
-			// Auto-activate the module on successful connection.
-			$this->registry->activate( 'linkedin' );
-			wp_safe_redirect( admin_url( 'admin.php?page=wpts-settings&wpts_connected=linkedin' ) );
+			$this->registry->activate( $module_slug );
+			wp_safe_redirect( admin_url( 'admin.php?page=wpts-settings&wpts_connected=' . $module_slug ) );
 		}
 
 		exit;
@@ -122,16 +131,25 @@ class WPTS_Settings_Page {
 
 		$module = sanitize_text_field( $_POST['wpts_module'] ?? '' );
 
-		if ( 'linkedin' === $module ) {
+		// Map module slug to option key prefixes.
+		$credential_map = array(
+			'linkedin'  => array( 'wpts_linkedin_client_id', 'wpts_linkedin_client_secret' ),
+			'instagram' => array( 'wpts_instagram_app_id', 'wpts_instagram_app_secret' ),
+		);
+
+		if ( isset( $credential_map[ $module ] ) ) {
+			$id_key     = $credential_map[ $module ][0];
+			$secret_key = $credential_map[ $module ][1];
+
 			$client_id     = sanitize_text_field( $_POST['wpts_client_id'] ?? '' );
 			$client_secret = sanitize_text_field( $_POST['wpts_client_secret'] ?? '' );
 
 			// Only update if a real value was submitted (not the placeholder or empty).
 			if ( ! empty( $client_id ) && false === strpos( $client_id, '•' ) ) {
-				update_option( 'wpts_linkedin_client_id', WPTS_Encryption::encrypt( $client_id ) );
+				update_option( $id_key, WPTS_Encryption::encrypt( $client_id ) );
 			}
 			if ( ! empty( $client_secret ) ) {
-				update_option( 'wpts_linkedin_client_secret', WPTS_Encryption::encrypt( $client_secret ) );
+				update_option( $secret_key, WPTS_Encryption::encrypt( $client_secret ) );
 			}
 		}
 
