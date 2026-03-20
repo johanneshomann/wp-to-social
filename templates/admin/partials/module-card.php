@@ -106,10 +106,13 @@ $modules = $this->registry->get_all();
 
 					<p class="wpts-help-text">
 						<?php
-						printf(
-							/* translators: %s: redirect URI */
-							esc_html__( 'Set this as your OAuth redirect URI: %s', 'wp-to-social' ),
-							'<code>' . esc_html( $module->get_redirect_uri() ) . '</code>'
+						echo wp_kses(
+							sprintf(
+								/* translators: %s: redirect URI */
+								__( 'Set this as your OAuth redirect URI: %s', 'wp-to-social' ),
+								'<code>' . esc_html( $module->get_redirect_uri() ) . '</code>'
+							),
+							array( 'code' => array() )
 						);
 						?>
 					</p>

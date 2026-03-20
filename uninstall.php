@@ -24,9 +24,13 @@ foreach ( $options as $option ) {
 	delete_option( $option );
 }
 
-// Drop activity table.
-$table = $wpdb->prefix . 'wpts_activity';
-$wpdb->query( "DROP TABLE IF EXISTS {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+// Drop activity table (validate prefix to prevent injection via corrupted config).
+if ( preg_match( '/^[a-zA-Z0-9_]+$/', $wpdb->prefix ) ) {
+	$table = $wpdb->prefix . 'wpts_activity';
+	$wpdb->query( "DROP TABLE IF EXISTS `{$table}`" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+}
 
 // Remove post meta.
-$wpdb->query( "DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE '_wpts_%'" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+$wpdb->query(
+	$wpdb->prepare( "DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE %s", '_wpts_%' ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+);
