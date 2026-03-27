@@ -21,7 +21,7 @@ class WPTS_LinkedIn_Module {
 			'name'        => __( 'LinkedIn', 'wp-to-social' ),
 			'slug'        => 'linkedin',
 			'icon'        => 'dashicons-linkedin',
-			'description' => __( 'Share posts to your LinkedIn profile.', 'wp-to-social' ),
+			'description' => __( 'Share posts to your LinkedIn profile or company page.', 'wp-to-social' ),
 		);
 	}
 
@@ -59,7 +59,7 @@ class WPTS_LinkedIn_Module {
 			),
 			array(
 				'title' => __( 'Add the required products', 'wp-to-social' ),
-				'desc'  => __( 'In your app dashboard, go to the "Products" tab. Request access to <strong>Sign In with LinkedIn using OpenID Connect</strong> and <strong>Share on LinkedIn</strong>. Both should be approved instantly.', 'wp-to-social' ),
+				'desc'  => __( 'In your app dashboard, go to the "Products" tab. Request access to <strong>Sign In with LinkedIn using OpenID Connect</strong>, <strong>Share on LinkedIn</strong>, and <strong>Advertising on LinkedIn</strong> (required for company page posting). The first two are approved instantly; Advertising may require verification.', 'wp-to-social' ),
 			),
 			array(
 				'title' => __( 'Copy your credentials', 'wp-to-social' ),
@@ -70,8 +70,12 @@ class WPTS_LinkedIn_Module {
 				'desc'  => __( 'Still on the "Auth" tab, scroll to "OAuth 2.0 settings". Click "Add redirect URL" and paste the <strong>Redirect URI</strong> shown below the Save button on this page.', 'wp-to-social' ),
 			),
 			array(
+				'title' => __( 'Verify your app on your company page (for company page posting)', 'wp-to-social' ),
+				'desc'  => __( 'In the "Settings" tab of your LinkedIn app, click <strong>Verify</strong> next to your associated company page. A page admin must confirm. This unlocks the <code>w_organization_social</code> scope needed to post as your company.', 'wp-to-social' ),
+			),
+			array(
 				'title' => __( 'Connect your account', 'wp-to-social' ),
-				'desc'  => __( 'Click the <strong>Connect with LinkedIn</strong> button that appears after saving your credentials. You will be redirected to LinkedIn to authorize access. Once approved, you are all set!', 'wp-to-social' ),
+				'desc'  => __( 'Click the <strong>Connect with LinkedIn</strong> button that appears after saving your credentials. You will be redirected to LinkedIn to authorize access. Once approved, you can choose whether to post as your personal profile or as a company page.', 'wp-to-social' ),
 			),
 		);
 	}
@@ -111,7 +115,7 @@ class WPTS_LinkedIn_Module {
 			'client_id'     => $client_id,
 			'redirect_uri'  => $this->get_redirect_uri(),
 			'state'         => $state,
-			'scope'         => 'openid profile w_member_social',
+			'scope'         => 'openid profile w_member_social r_organization_social w_organization_social',
 		);
 
 		return self::AUTH_URL . '?' . http_build_query( $params );
@@ -162,12 +166,16 @@ class WPTS_LinkedIn_Module {
 		// Fetch profile info.
 		$profile = $this->fetch_profile( $body['access_token'] );
 
+		// Fetch administered organizations.
+		$organizations = $this->fetch_organizations( $body['access_token'] );
+
 		$token_data = array(
 			'access_token'  => $body['access_token'],
 			'expires_at'    => time() + ( $body['expires_in'] ?? 5184000 ), // Default 60 days.
 			'refresh_token' => $body['refresh_token'] ?? '',
 			'person_id'     => $profile['sub'] ?? '',
 			'profile_name'  => $profile['name'] ?? '',
+			'organizations' => $organizations,
 		);
 
 		$encrypted = WPTS_Encryption::encrypt( wp_json_encode( $token_data ) );
@@ -194,6 +202,128 @@ class WPTS_LinkedIn_Module {
 		}
 
 		return json_decode( wp_remote_retrieve_body( $response ), true ) ?: array();
+	}
+
+	/**
+	 * Fetch organizations the authenticated user administers.
+	 *
+	 * @param string $access_token Access token.
+	 * @return array Array of [ 'id' => org_id, 'name' => org_name ].
+	 */
+	private function fetch_organizations( $access_token ) {
+		$response = wp_remote_get( self::API_BASE . '/organizationalEntityAcls?q=roleAssignee&role=ADMINISTRATOR&projection=(elements*(organizationalTarget~(localizedName)))' , array(
+			'headers' => array(
+				'Authorization'             => 'Bearer ' . $access_token,
+				'X-Restli-Protocol-Version' => '2.0.0',
+			),
+			'timeout' => 15,
+		) );
+
+		if ( is_wp_error( $response ) ) {
+			return array();
+		}
+
+		$body = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		if ( empty( $body['elements'] ) || ! is_array( $body['elements'] ) ) {
+			return array();
+		}
+
+		$orgs = array();
+		foreach ( $body['elements'] as $element ) {
+			$target = $element['organizationalTarget'] ?? '';
+			$name   = $element['organizationalTarget~']['localizedName'] ?? '';
+
+			// Extract numeric org ID from URN like "urn:li:organization:12345".
+			if ( preg_match( '/urn:li:organization:(\d+)/', $target, $matches ) ) {
+				$orgs[] = array(
+					'id'   => $matches[1],
+					'name' => $name,
+				);
+			}
+		}
+
+		return $orgs;
+	}
+
+	/**
+	 * Get available posting targets (personal profile + organizations).
+	 *
+	 * @return array Array of [ 'value' => urn_string, 'label' => display_name ].
+	 */
+	public function get_posting_targets() {
+		$data = $this->get_token_data();
+		if ( empty( $data ) ) {
+			return array();
+		}
+
+		$targets = array(
+			array(
+				'value' => 'person:' . $data['person_id'],
+				'label' => sprintf(
+					/* translators: %s: profile name */
+					__( 'Personal profile (%s)', 'wp-to-social' ),
+					$data['profile_name'] ?: __( 'Unknown', 'wp-to-social' )
+				),
+			),
+		);
+
+		if ( ! empty( $data['organizations'] ) ) {
+			foreach ( $data['organizations'] as $org ) {
+				$targets[] = array(
+					'value' => 'organization:' . $org['id'],
+					'label' => sprintf(
+						/* translators: %s: organization name */
+						__( 'Company page: %s', 'wp-to-social' ),
+						$org['name']
+					),
+				);
+			}
+		}
+
+		return $targets;
+	}
+
+	/**
+	 * Get the currently selected posting target.
+	 *
+	 * @return string Target value (e.g. "person:abc123" or "organization:12345").
+	 */
+	public function get_posting_target() {
+		$target = get_option( 'wpts_linkedin_posting_target', '' );
+
+		if ( empty( $target ) ) {
+			$data = $this->get_token_data();
+			return $data ? 'person:' . $data['person_id'] : '';
+		}
+
+		return $target;
+	}
+
+	/**
+	 * Save the posting target.
+	 *
+	 * @param string $target Target value.
+	 */
+	public function save_posting_target( $target ) {
+		update_option( 'wpts_linkedin_posting_target', sanitize_text_field( $target ) );
+	}
+
+	/**
+	 * Build the author URN for the API payload.
+	 *
+	 * @return string URN string like "urn:li:person:abc" or "urn:li:organization:123".
+	 */
+	private function get_author_urn() {
+		$target = $this->get_posting_target();
+
+		if ( str_starts_with( $target, 'organization:' ) ) {
+			$org_id = substr( $target, strlen( 'organization:' ) );
+			return 'urn:li:organization:' . $org_id;
+		}
+
+		$data = $this->get_token_data();
+		return 'urn:li:person:' . ( $data['person_id'] ?? '' );
 	}
 
 	/**
@@ -225,7 +355,7 @@ class WPTS_LinkedIn_Module {
 		}
 
 		$payload = array(
-			'author'          => 'urn:li:person:' . $token_data['person_id'],
+			'author'          => $this->get_author_urn(),
 			'lifecycleState'  => 'PUBLISHED',
 			'specificContent' => array(
 				'com.linkedin.ugc.ShareContent' => array(
@@ -292,6 +422,7 @@ class WPTS_LinkedIn_Module {
 	 */
 	public function disconnect() {
 		delete_option( 'wpts_linkedin_token' );
+		delete_option( 'wpts_linkedin_posting_target' );
 	}
 
 	/**
@@ -320,10 +451,25 @@ class WPTS_LinkedIn_Module {
 			);
 		}
 
+		// Determine display name based on posting target.
+		$target      = $this->get_posting_target();
+		$target_name = $data['profile_name'] ?? '';
+
+		if ( str_starts_with( $target, 'organization:' ) ) {
+			$org_id = substr( $target, strlen( 'organization:' ) );
+			foreach ( ( $data['organizations'] ?? array() ) as $org ) {
+				if ( $org['id'] === $org_id ) {
+					$target_name = $org['name'];
+					break;
+				}
+			}
+		}
+
 		return array(
-			'connected'    => true,
-			'profile_name' => $data['profile_name'] ?? '',
-			'expired'      => $this->is_token_expired( $data ),
+			'connected'       => true,
+			'profile_name'    => $target_name,
+			'expired'         => $this->is_token_expired( $data ),
+			'has_targets'     => count( $this->get_posting_targets() ) > 1,
 		);
 	}
 

@@ -54,6 +54,36 @@ $modules = $this->registry->get_all();
 					<?php endif; ?>
 				</p>
 
+				<?php
+				// Show posting target selector if module supports it and has multiple targets.
+				if ( method_exists( $module, 'get_posting_targets' ) && ! empty( $status['has_targets'] ) ) :
+					$targets        = $module->get_posting_targets();
+					$current_target = $module->get_posting_target();
+				?>
+				<form method="post" class="wpts-posting-target-form">
+					<?php wp_nonce_field( 'wpts_save_posting_target' ); ?>
+					<input type="hidden" name="wpts_action" value="save_posting_target" />
+					<input type="hidden" name="wpts_module" value="<?php echo esc_attr( $slug ); ?>" />
+
+					<div class="wpts-field">
+						<label for="wpts_posting_target_<?php echo esc_attr( $slug ); ?>">
+							<?php esc_html_e( 'Post as', 'wp-to-social' ); ?>
+						</label>
+						<select id="wpts_posting_target_<?php echo esc_attr( $slug ); ?>" name="wpts_posting_target" class="regular-text">
+							<?php foreach ( $targets as $target ) : ?>
+								<option value="<?php echo esc_attr( $target['value'] ); ?>" <?php selected( $current_target, $target['value'] ); ?>>
+									<?php echo esc_html( $target['label'] ); ?>
+								</option>
+							<?php endforeach; ?>
+						</select>
+					</div>
+
+					<button type="submit" class="button" style="margin-top:4px;">
+						<?php esc_html_e( 'Save', 'wp-to-social' ); ?>
+					</button>
+				</form>
+				<?php endif; ?>
+
 				<div class="wpts-module-card__actions">
 					<a href="<?php echo esc_url( $module->get_auth_url() ); ?>" class="button">
 						<?php esc_html_e( 'Reconnect', 'wp-to-social' ); ?>

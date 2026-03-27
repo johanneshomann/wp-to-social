@@ -67,6 +67,10 @@ class WPTS_Settings_Page {
 				$this->save_field_mapping();
 				break;
 
+			case 'save_posting_target':
+				$this->save_posting_target();
+				break;
+
 			case 'disconnect':
 				$this->disconnect_module();
 				break;
@@ -206,6 +210,24 @@ class WPTS_Settings_Page {
 		WPTS_Field_Mapper::save_mapping( $module, $post_type, $mapping );
 
 		wp_safe_redirect( admin_url( 'admin.php?page=wpts-settings&tab=field-mapping&saved=1' ) );
+		exit;
+	}
+
+	/**
+	 * Save the posting target for a module.
+	 */
+	private function save_posting_target() {
+		check_admin_referer( 'wpts_save_posting_target' );
+
+		$module_slug = sanitize_text_field( $_POST['wpts_module'] ?? '' );
+		$target      = sanitize_text_field( $_POST['wpts_posting_target'] ?? '' );
+		$module      = $this->registry->get( $module_slug );
+
+		if ( $module && method_exists( $module, 'save_posting_target' ) ) {
+			$module->save_posting_target( $target );
+		}
+
+		wp_safe_redirect( admin_url( 'admin.php?page=wpts-settings&tab=modules&saved=1' ) );
 		exit;
 	}
 

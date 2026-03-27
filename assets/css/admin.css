@@ -263,6 +263,20 @@
 	border-radius: 3px;
 }
 
+/* Posting Target Form */
+.wpts-posting-target-form {
+	margin-top: 12px;
+	padding: 12px;
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+}
+
+.wpts-posting-target-form select {
+	width: 100%;
+	max-width: 400px;
+}
+
 /* Credentials Form */
 .wpts-credentials-form {
 	margin-top: 16px;
