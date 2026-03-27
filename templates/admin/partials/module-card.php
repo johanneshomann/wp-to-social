@@ -54,6 +54,32 @@ $modules = $this->registry->get_all();
 					<?php endif; ?>
 				</p>
 
+				<?php if ( method_exists( $module, 'is_org_posting_enabled' ) ) :
+					$org_enabled = $module->is_org_posting_enabled();
+				?>
+				<form method="post" class="wpts-org-toggle-form">
+					<?php wp_nonce_field( 'wpts_save_org_posting' ); ?>
+					<input type="hidden" name="wpts_action" value="save_org_posting" />
+					<input type="hidden" name="wpts_module" value="<?php echo esc_attr( $slug ); ?>" />
+
+					<label class="wpts-toggle-label">
+						<input type="checkbox" name="wpts_org_posting" value="1" <?php checked( $org_enabled ); ?> />
+						<?php esc_html_e( 'Enable company page posting', 'wp-to-social' ); ?>
+					</label>
+					<button type="submit" class="button button-small"><?php esc_html_e( 'Save', 'wp-to-social' ); ?></button>
+
+					<?php if ( ! $org_enabled ) : ?>
+						<p class="wpts-help-text">
+							<?php esc_html_e( 'Enable this if you want to post as a company page. Requires "Advertising on LinkedIn" product and app verification on your page. You will need to reconnect after enabling.', 'wp-to-social' ); ?>
+						</p>
+					<?php elseif ( empty( $status['has_targets'] ) ) : ?>
+						<p class="wpts-help-text" style="color:#d63638;">
+							<?php esc_html_e( 'Company page posting is enabled but no organizations were found. Please reconnect to fetch your pages, or verify your app is approved for the required scopes.', 'wp-to-social' ); ?>
+						</p>
+					<?php endif; ?>
+				</form>
+				<?php endif; ?>
+
 				<?php
 				// Show posting target selector if module supports it and has multiple targets.
 				if ( method_exists( $module, 'get_posting_targets' ) && ! empty( $status['has_targets'] ) ) :

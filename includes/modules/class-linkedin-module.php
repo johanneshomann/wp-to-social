@@ -115,7 +115,9 @@ class WPTS_LinkedIn_Module {
 			'client_id'     => $client_id,
 			'redirect_uri'  => $this->get_redirect_uri(),
 			'state'         => $state,
-			'scope'         => 'openid profile w_member_social r_organization_social w_organization_social',
+			'scope'         => $this->is_org_posting_enabled()
+				? 'openid profile w_member_social r_organization_social w_organization_social'
+				: 'openid profile w_member_social',
 		);
 
 		return self::AUTH_URL . '?' . http_build_query( $params );
@@ -166,8 +168,10 @@ class WPTS_LinkedIn_Module {
 		// Fetch profile info.
 		$profile = $this->fetch_profile( $body['access_token'] );
 
-		// Fetch administered organizations.
-		$organizations = $this->fetch_organizations( $body['access_token'] );
+		// Fetch administered organizations (only if org posting is enabled).
+		$organizations = $this->is_org_posting_enabled()
+			? $this->fetch_organizations( $body['access_token'] )
+			: array();
 
 		$token_data = array(
 			'access_token'  => $body['access_token'],
@@ -244,6 +248,24 @@ class WPTS_LinkedIn_Module {
 		}
 
 		return $orgs;
+	}
+
+	/**
+	 * Check if company page posting is enabled.
+	 *
+	 * @return bool
+	 */
+	public function is_org_posting_enabled() {
+		return (bool) get_option( 'wpts_linkedin_org_posting', false );
+	}
+
+	/**
+	 * Enable or disable company page posting.
+	 *
+	 * @param bool $enabled Whether to enable org posting.
+	 */
+	public function set_org_posting_enabled( $enabled ) {
+		update_option( 'wpts_linkedin_org_posting', $enabled ? 1 : 0 );
 	}
 
 	/**
@@ -423,6 +445,7 @@ class WPTS_LinkedIn_Module {
 	public function disconnect() {
 		delete_option( 'wpts_linkedin_token' );
 		delete_option( 'wpts_linkedin_posting_target' );
+		delete_option( 'wpts_linkedin_org_posting' );
 	}
 
 	/**

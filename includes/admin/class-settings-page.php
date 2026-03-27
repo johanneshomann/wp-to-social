@@ -71,6 +71,10 @@ class WPTS_Settings_Page {
 				$this->save_posting_target();
 				break;
 
+			case 'save_org_posting':
+				$this->save_org_posting();
+				break;
+
 			case 'disconnect':
 				$this->disconnect_module();
 				break;
@@ -214,6 +218,24 @@ class WPTS_Settings_Page {
 	}
 
 	/**
+	 * Save the org posting toggle for a module.
+	 */
+	private function save_org_posting() {
+		check_admin_referer( 'wpts_save_org_posting' );
+
+		$module_slug = sanitize_text_field( $_POST['wpts_module'] ?? '' );
+		$enabled     = ! empty( $_POST['wpts_org_posting'] );
+		$module      = $this->registry->get( $module_slug );
+
+		if ( $module && method_exists( $module, 'set_org_posting_enabled' ) ) {
+			$module->set_org_posting_enabled( $enabled );
+		}
+
+		wp_safe_redirect( admin_url( 'admin.php?page=wpts-settings&tab=modules&saved=1' ) );
+		exit;
+	}
+
+	/**
 	 * Save the posting target for a module.
 	 */
 	private function save_posting_target() {
@@ -232,7 +254,7 @@ class WPTS_Settings_Page {
 	}
 
 	/**
-	 * Disconnect a module.
+	 * Disconnect a module — removes tokens, credentials, settings, and orphan post meta.
 	 */
 	private function disconnect_module() {
 		check_admin_referer( 'wpts_disconnect_module' );
@@ -240,10 +262,48 @@ class WPTS_Settings_Page {
 		$module_slug = sanitize_text_field( $_POST['wpts_module'] ?? '' );
 		$module      = $this->registry->get( $module_slug );
 
-		if ( $module && method_exists( $module, 'disconnect' ) ) {
+		if ( ! $module ) {
+			wp_safe_redirect( admin_url( 'admin.php?page=wpts-settings&tab=modules' ) );
+			exit;
+		}
+
+		// 1. Module-level disconnect (tokens, posting target, org posting flag).
+		if ( method_exists( $module, 'disconnect' ) ) {
 			$module->disconnect();
 		}
 
+		// 2. Remove stored credentials.
+		$credential_map = array(
+			'linkedin'  => array( 'wpts_linkedin_client_id', 'wpts_linkedin_client_secret' ),
+			'instagram' => array( 'wpts_instagram_app_id', 'wpts_instagram_app_secret' ),
+		);
+
+		if ( isset( $credential_map[ $module_slug ] ) ) {
+			foreach ( $credential_map[ $module_slug ] as $option_key ) {
+				delete_option( $option_key );
+			}
+		}
+
+		// 3. Remove module from eligible post types.
+		$eligible = get_option( 'wpts_eligible_post_types', array() );
+		if ( isset( $eligible[ $module_slug ] ) ) {
+			unset( $eligible[ $module_slug ] );
+			update_option( 'wpts_eligible_post_types', $eligible );
+		}
+
+		// 4. Remove field mappings for this module.
+		$mapping = get_option( 'wpts_field_mapping', array() );
+		if ( isset( $mapping[ $module_slug ] ) ) {
+			unset( $mapping[ $module_slug ] );
+			update_option( 'wpts_field_mapping', $mapping );
+		}
+
+		// 5. Clean up orphan post meta for this module.
+		global $wpdb;
+		$wpdb->delete( $wpdb->postmeta, array( 'meta_key' => '_wpts_post_to_' . $module_slug ) );
+		$wpdb->delete( $wpdb->postmeta, array( 'meta_key' => '_wpts_' . $module_slug . '_posted' ) );
+
+		// 6. Deactivate the module.
 		$this->registry->deactivate( $module_slug );
 
 		wp_safe_redirect( admin_url( 'admin.php?page=wpts-settings&tab=modules' ) );
