@@ -219,7 +219,7 @@ class WPTS_LinkedIn_Module {
 	private function fetch_organizations( $access_token ) {
 		$headers = array(
 			'Authorization'    => 'Bearer ' . $access_token,
-			'LinkedIn-Version' => '202501',
+			'LinkedIn-Version' => '202603',
 		);
 
 		// Step 1: Get organization ACLs for the authenticated user.
@@ -277,7 +277,7 @@ class WPTS_LinkedIn_Module {
 		$response = wp_remote_get( 'https://api.linkedin.com/rest/organizations/' . $org_id, array(
 			'headers' => array(
 				'Authorization'    => 'Bearer ' . $access_token,
-				'LinkedIn-Version' => '202501',
+				'LinkedIn-Version' => '202603',
 			),
 			'timeout' => 10,
 		) );
@@ -447,7 +447,7 @@ class WPTS_LinkedIn_Module {
 			'headers' => array(
 				'Authorization'    => 'Bearer ' . $token_data['access_token'],
 				'Content-Type'     => 'application/json',
-				'LinkedIn-Version' => '202501',
+				'LinkedIn-Version' => '202603',
 			),
 			'body'    => wp_json_encode( $payload ),
 			'timeout' => 30,
