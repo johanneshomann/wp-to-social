@@ -482,10 +482,13 @@ class WPTS_LinkedIn_Module {
 			),
 		);
 
-		// Add image thumbnail if available.
+		// Upload image to LinkedIn and add as thumbnail.
 		$image_url = $values['image'] ?? '';
 		if ( ! empty( $image_url ) ) {
-			$payload['content']['article']['thumbnail'] = $image_url;
+			$image_urn = $this->upload_image( $token_data['access_token'], $image_url );
+			if ( ! is_wp_error( $image_urn ) ) {
+				$payload['content']['article']['thumbnail'] = $image_urn;
+			}
 		}
 
 		// Debug: store the payload so we can inspect what was sent.
@@ -541,6 +544,100 @@ class WPTS_LinkedIn_Module {
 		// The versioned Posts API returns the post URN in the x-restli-id header.
 		$post_urn = wp_remote_retrieve_header( $response, 'x-restli-id' );
 		return $post_urn ?: ( $body['id'] ?? '' );
+	}
+
+	/**
+	 * Upload an image to LinkedIn and return the image URN.
+	 *
+	 * Uses the LinkedIn Images API (initialize upload → PUT binary).
+	 *
+	 * @param string $access_token Access token.
+	 * @param string $image_url    Public URL of the image.
+	 * @return string|WP_Error Image URN on success, WP_Error on failure.
+	 */
+	private function upload_image( $access_token, $image_url ) {
+		$author = $this->get_author_urn();
+
+		$headers = array(
+			'Authorization'    => 'Bearer ' . $access_token,
+			'Content-Type'     => 'application/json',
+			'LinkedIn-Version' => '202603',
+		);
+
+		// Step 1: Initialize the upload.
+		$init_payload = array(
+			'initializeUploadRequest' => array(
+				'owner' => $author,
+			),
+		);
+
+		$init_response = wp_remote_post( 'https://api.linkedin.com/rest/images?action=initializeUpload', array(
+			'headers' => $headers,
+			'body'    => wp_json_encode( $init_payload ),
+			'timeout' => 15,
+		) );
+
+		if ( is_wp_error( $init_response ) ) {
+			return $init_response;
+		}
+
+		$init_code = wp_remote_retrieve_response_code( $init_response );
+		$init_body = json_decode( wp_remote_retrieve_body( $init_response ), true );
+
+		if ( $init_code < 200 || $init_code >= 300 ) {
+			return new WP_Error( 'image_init_failed', sprintf(
+				'Image upload init failed (%d): %s',
+				$init_code,
+				$init_body['message'] ?? 'Unknown error'
+			) );
+		}
+
+		$upload_url = $init_body['value']['uploadUrl'] ?? '';
+		$image_urn  = $init_body['value']['image'] ?? '';
+
+		if ( empty( $upload_url ) || empty( $image_urn ) ) {
+			return new WP_Error( 'image_init_missing', 'Missing uploadUrl or image URN in response' );
+		}
+
+		// Step 2: Download the image binary.
+		$image_response = wp_remote_get( $image_url, array( 'timeout' => 30 ) );
+
+		if ( is_wp_error( $image_response ) ) {
+			return $image_response;
+		}
+
+		$image_binary = wp_remote_retrieve_body( $image_response );
+		$content_type = wp_remote_retrieve_header( $image_response, 'content-type' ) ?: 'application/octet-stream';
+
+		if ( empty( $image_binary ) ) {
+			return new WP_Error( 'image_download_failed', 'Failed to download image from ' . $image_url );
+		}
+
+		// Step 3: Upload the binary to LinkedIn.
+		$upload_response = wp_remote_request( $upload_url, array(
+			'method'  => 'PUT',
+			'headers' => array(
+				'Authorization' => 'Bearer ' . $access_token,
+				'Content-Type'  => $content_type,
+			),
+			'body'    => $image_binary,
+			'timeout' => 60,
+		) );
+
+		if ( is_wp_error( $upload_response ) ) {
+			return $upload_response;
+		}
+
+		$upload_code = wp_remote_retrieve_response_code( $upload_response );
+
+		if ( $upload_code < 200 || $upload_code >= 300 ) {
+			return new WP_Error( 'image_upload_failed', sprintf(
+				'Image upload failed (%d)',
+				$upload_code
+			) );
+		}
+
+		return $image_urn;
 	}
 
 	/**
