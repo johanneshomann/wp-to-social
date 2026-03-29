@@ -93,9 +93,10 @@ class WPTS_Field_Mapper {
 
 			case 'post_content':
 				$content = $post->post_content;
-				// Remove Gutenberg block comments.
+				// Decode HTML entities so tags can be stripped properly.
+				$content = html_entity_decode( $content, ENT_QUOTES, 'UTF-8' );
+				// Remove block comments, shortcodes, and all HTML tags.
 				$content = preg_replace( '/<!--.*?-->/', '', $content );
-				// Strip shortcodes and HTML tags.
 				$content = wp_strip_all_tags( strip_shortcodes( $content ) );
 				// Collapse multiple whitespace/newlines into clean paragraphs.
 				$content = preg_replace( '/\s*\n\s*\n\s*/', "\n\n", $content );
@@ -120,7 +121,15 @@ class WPTS_Field_Mapper {
 
 			default:
 				// Custom field / post meta.
-				return get_post_meta( $post->ID, $wp_field, true ) ?: '';
+				$value = get_post_meta( $post->ID, $wp_field, true ) ?: '';
+				// If the value contains HTML, strip it cleanly.
+				if ( is_string( $value ) && ( str_contains( $value, '<' ) || str_contains( $value, '&lt;' ) ) ) {
+					$value = html_entity_decode( $value, ENT_QUOTES, 'UTF-8' );
+					$value = wp_strip_all_tags( $value );
+					$value = preg_replace( '/\s*\n\s*\n\s*/', "\n\n", $value );
+					$value = trim( $value );
+				}
+				return $value;
 		}
 	}
 
