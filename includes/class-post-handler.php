@@ -156,6 +156,17 @@ class WPTS_Post_Handler {
 	public function post_to_platform( $slug, $module, $post ) {
 		$values = WPTS_Field_Mapper::resolve( $post->ID, $slug );
 
+		// Debug: store resolved field values.
+		update_option( 'wpts_field_debug', wp_json_encode( array(
+			'time'       => current_time( 'mysql' ),
+			'post_id'    => $post->ID,
+			'platform'   => $slug,
+			'values'     => $values,
+			'has_thumb'  => has_post_thumbnail( $post->ID ),
+			'thumb_id'   => get_post_thumbnail_id( $post->ID ),
+			'thumb_url'  => get_the_post_thumbnail_url( $post->ID, 'large' ),
+		) ) );
+
 		if ( empty( $values ) ) {
 			return;
 		}

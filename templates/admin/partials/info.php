@@ -114,6 +114,15 @@ foreach ( $this->registry->get_active() as $slug => $module ) {
 		</table>
 	</div>
 
+	<!-- Debug: Field Mapper -->
+	<?php $field_debug = get_option( 'wpts_field_debug', '' ); ?>
+	<?php if ( ! empty( $field_debug ) ) : ?>
+	<div class="wpts-info-section">
+		<h2><?php esc_html_e( 'Field Mapper Debug (last publish)', 'wp-to-social' ); ?></h2>
+		<pre style="background:#f6f7f7;padding:12px;overflow-x:auto;font-size:12px;max-height:300px;"><?php echo esc_html( $field_debug ); ?></pre>
+	</div>
+	<?php endif; ?>
+
 	<!-- Debug: LinkedIn Org API Response -->
 	<?php $org_debug = get_option( 'wpts_linkedin_org_debug', '' ); ?>
 	<?php if ( ! empty( $org_debug ) ) : ?>

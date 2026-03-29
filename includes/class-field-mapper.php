@@ -92,7 +92,14 @@ class WPTS_Field_Mapper {
 				return $post->post_title;
 
 			case 'post_content':
-				return wp_strip_all_tags( strip_shortcodes( $post->post_content ) );
+				$content = $post->post_content;
+				// Remove Gutenberg block comments.
+				$content = preg_replace( '/<!--.*?-->/', '', $content );
+				// Strip shortcodes and HTML tags.
+				$content = wp_strip_all_tags( strip_shortcodes( $content ) );
+				// Collapse multiple whitespace/newlines into clean paragraphs.
+				$content = preg_replace( '/\s*\n\s*\n\s*/', "\n\n", $content );
+				return trim( $content );
 
 			case 'post_excerpt':
 				$excerpt = $post->post_excerpt;
