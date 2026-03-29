@@ -18,7 +18,10 @@ class WPTS_Post_Handler {
 	 * Register hooks.
 	 */
 	public function init() {
-		// Use rest_after_insert_{post_type} for Gutenberg (fires after meta is saved).
+		// Use save_post at late priority so meta box save_meta (priority 10) runs first.
+		add_action( 'save_post', array( $this, 'on_save_post' ), 99, 2 );
+
+		// REST/Gutenberg fallback.
 		$eligible = get_option( 'wpts_eligible_post_types', array() );
 		$types    = array();
 		foreach ( $eligible as $platform_types ) {
@@ -27,9 +30,6 @@ class WPTS_Post_Handler {
 		foreach ( array_unique( $types ) as $pt ) {
 			add_action( "rest_after_insert_{$pt}", array( $this, 'on_rest_publish' ), 10, 2 );
 		}
-
-		// Classic Editor fallback.
-		add_action( 'transition_post_status', array( $this, 'on_publish' ), 10, 3 );
 
 		add_action( 'wp_ajax_wpts_retry_post', array( $this, 'ajax_retry' ) );
 	}
@@ -67,17 +67,28 @@ class WPTS_Post_Handler {
 	 * @param string  $old_status Old post status.
 	 * @param WP_Post $post       Post object.
 	 */
-	public function on_publish( $new_status, $old_status, $post ) {
-		if ( 'publish' !== $new_status ) {
+	/**
+	 * Classic Editor: fires on save_post at priority 99 (after meta box saves at 10).
+	 *
+	 * @param int     $post_id Post ID.
+	 * @param WP_Post $post    Post object.
+	 */
+	public function on_save_post( $post_id, $post ) {
+		// Only on publish.
+		if ( 'publish' !== $post->post_status ) {
 			return;
 		}
 
-		if ( 'publish' === $old_status ) {
-			return;
-		}
-
-		// Skip if this is a REST request — on_rest_publish handles it (meta is saved by then).
+		// Skip REST requests — on_rest_publish handles those.
 		if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+			return;
+		}
+
+		// Skip autosaves and revisions.
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+		if ( wp_is_post_revision( $post_id ) ) {
 			return;
 		}
 
