@@ -18,8 +18,46 @@ class WPTS_Post_Handler {
 	 * Register hooks.
 	 */
 	public function init() {
+		// Use rest_after_insert_{post_type} for Gutenberg (fires after meta is saved).
+		$eligible = get_option( 'wpts_eligible_post_types', array() );
+		$types    = array();
+		foreach ( $eligible as $platform_types ) {
+			$types = array_merge( $types, (array) $platform_types );
+		}
+		foreach ( array_unique( $types ) as $pt ) {
+			add_action( "rest_after_insert_{$pt}", array( $this, 'on_rest_publish' ), 10, 2 );
+		}
+
+		// Classic Editor fallback.
 		add_action( 'transition_post_status', array( $this, 'on_publish' ), 10, 3 );
+
 		add_action( 'wp_ajax_wpts_retry_post', array( $this, 'ajax_retry' ) );
+	}
+
+	/**
+	 * Handle Gutenberg REST API publish — fires after meta is saved.
+	 *
+	 * @param WP_Post         $post    Post object.
+	 * @param WP_REST_Request $request Request object.
+	 */
+	public function on_rest_publish( $post, $request ) {
+		if ( 'publish' !== $post->post_status ) {
+			return;
+		}
+
+		// Avoid running if Classic Editor already handled this.
+		if ( ! defined( 'REST_REQUEST' ) || ! REST_REQUEST ) {
+			return;
+		}
+
+		// Check the status param — only trigger on initial publish.
+		$status_before = $request->get_param( 'original_status' );
+		// WordPress doesn't send original_status, so check our own flag.
+		if ( get_post_meta( $post->ID, '_wpts_rest_handled', true ) ) {
+			return;
+		}
+
+		$this->do_publish( $post, 'rest' );
 	}
 
 	/**
@@ -30,25 +68,35 @@ class WPTS_Post_Handler {
 	 * @param WP_Post $post       Post object.
 	 */
 	public function on_publish( $new_status, $old_status, $post ) {
-		$debug = array(
-			'time'       => current_time( 'mysql' ),
-			'post_id'    => $post->ID,
-			'post_type'  => $post->post_type,
-			'old_status' => $old_status,
-			'new_status' => $new_status,
-		);
-
 		if ( 'publish' !== $new_status ) {
-			$debug['stopped_at'] = 'not_publish';
-			update_option( 'wpts_handler_debug', wp_json_encode( $debug ) );
 			return;
 		}
 
 		if ( 'publish' === $old_status ) {
-			$debug['stopped_at'] = 'already_published';
-			update_option( 'wpts_handler_debug', wp_json_encode( $debug ) );
 			return;
 		}
+
+		// Skip if this is a REST request — on_rest_publish handles it (meta is saved by then).
+		if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+			return;
+		}
+
+		$this->do_publish( $post, 'classic' );
+	}
+
+	/**
+	 * Shared publish logic used by both Classic Editor and REST (Gutenberg) paths.
+	 *
+	 * @param WP_Post $post   Post object.
+	 * @param string  $source 'classic' or 'rest'.
+	 */
+	private function do_publish( $post, $source ) {
+		$debug = array(
+			'time'       => current_time( 'mysql' ),
+			'post_id'    => $post->ID,
+			'post_type'  => $post->post_type,
+			'source'     => $source,
+		);
 
 		$eligible = get_option( 'wpts_eligible_post_types', array() );
 		$active   = $this->registry->get_active();
@@ -66,7 +114,7 @@ class WPTS_Post_Handler {
 
 			$meta_key = '_wpts_post_to_' . $slug;
 			if ( ! get_post_meta( $post->ID, $meta_key, true ) ) {
-				$debug['modules'][ $slug ] = 'skipped: checkbox not checked';
+				$debug['modules'][ $slug ] = 'skipped: checkbox not checked (meta value: ' . var_export( get_post_meta( $post->ID, $meta_key, true ), true ) . ')';
 				continue;
 			}
 
