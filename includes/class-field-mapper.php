@@ -122,8 +122,22 @@ class WPTS_Field_Mapper {
 			default:
 				// Custom field / post meta.
 				$value = get_post_meta( $post->ID, $wp_field, true ) ?: '';
+
+				// If the value is a numeric ID, it's likely an attachment (e.g. MetaBox single_image).
+				// Convert to URL for image fields.
+				if ( is_numeric( $value ) && (int) $value > 0 ) {
+					$url = wp_get_attachment_url( (int) $value );
+					if ( $url ) {
+						return $url;
+					}
+				}
+
+				if ( ! is_string( $value ) ) {
+					return is_scalar( $value ) ? (string) $value : '';
+				}
+
 				// If the value contains HTML, strip it cleanly.
-				if ( is_string( $value ) && ( str_contains( $value, '<' ) || str_contains( $value, '&lt;' ) ) ) {
+				if ( str_contains( $value, '<' ) || str_contains( $value, '&lt;' ) ) {
 					$value = html_entity_decode( $value, ENT_QUOTES, 'UTF-8' );
 					$value = wp_strip_all_tags( $value );
 					$value = preg_replace( '/\s*\n\s*\n\s*/', "\n\n", $value );
