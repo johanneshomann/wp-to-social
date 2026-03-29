@@ -211,43 +211,84 @@ class WPTS_LinkedIn_Module {
 	/**
 	 * Fetch organizations the authenticated user administers.
 	 *
+	 * Uses the LinkedIn Community Management (versioned REST) API.
+	 *
 	 * @param string $access_token Access token.
 	 * @return array Array of [ 'id' => org_id, 'name' => org_name ].
 	 */
 	private function fetch_organizations( $access_token ) {
-		$response = wp_remote_get( self::API_BASE . '/organizationalEntityAcls?q=roleAssignee&role=ADMINISTRATOR&projection=(elements*(organizationalTarget~(localizedName)))' , array(
-			'headers' => array(
-				'Authorization'             => 'Bearer ' . $access_token,
-				'X-Restli-Protocol-Version' => '2.0.0',
-			),
+		$headers = array(
+			'Authorization'    => 'Bearer ' . $access_token,
+			'LinkedIn-Version' => '202402',
+		);
+
+		// Step 1: Get organization ACLs for the authenticated user.
+		$response = wp_remote_get( 'https://api.linkedin.com/rest/organizationAcls?q=roleAssignee', array(
+			'headers' => $headers,
 			'timeout' => 15,
 		) );
 
 		if ( is_wp_error( $response ) ) {
+			update_option( 'wpts_linkedin_org_debug', 'WP_Error: ' . $response->get_error_message() );
 			return array();
 		}
 
-		$body = json_decode( wp_remote_retrieve_body( $response ), true );
+		$raw_body    = wp_remote_retrieve_body( $response );
+		$status_code = wp_remote_retrieve_response_code( $response );
+		$body        = json_decode( $raw_body, true );
+
+		// Store debug info so we can see what LinkedIn returned.
+		update_option( 'wpts_linkedin_org_debug', wp_json_encode( array(
+			'status' => $status_code,
+			'body'   => $body,
+		) ) );
 
 		if ( empty( $body['elements'] ) || ! is_array( $body['elements'] ) ) {
 			return array();
 		}
 
+		// Step 2: Extract org IDs and fetch each organization's name.
 		$orgs = array();
 		foreach ( $body['elements'] as $element ) {
-			$target = $element['organizationalTarget'] ?? '';
-			$name   = $element['organizationalTarget~']['localizedName'] ?? '';
+			$org_urn = $element['organization'] ?? '';
 
-			// Extract numeric org ID from URN like "urn:li:organization:12345".
-			if ( preg_match( '/urn:li:organization:(\d+)/', $target, $matches ) ) {
+			if ( preg_match( '/urn:li:organization:(\d+)/', $org_urn, $matches ) ) {
+				$org_id   = $matches[1];
+				$org_name = $this->fetch_organization_name( $access_token, $org_id );
+
 				$orgs[] = array(
-					'id'   => $matches[1],
-					'name' => $name,
+					'id'   => $org_id,
+					'name' => $org_name ?: __( 'Organization', 'wp-to-social' ) . ' ' . $org_id,
 				);
 			}
 		}
 
 		return $orgs;
+	}
+
+	/**
+	 * Fetch a single organization's name by ID.
+	 *
+	 * @param string $access_token Access token.
+	 * @param string $org_id       Organization ID.
+	 * @return string Organization name, or empty string on failure.
+	 */
+	private function fetch_organization_name( $access_token, $org_id ) {
+		$response = wp_remote_get( 'https://api.linkedin.com/rest/organizations/' . $org_id, array(
+			'headers' => array(
+				'Authorization'    => 'Bearer ' . $access_token,
+				'LinkedIn-Version' => '202402',
+			),
+			'timeout' => 10,
+		) );
+
+		if ( is_wp_error( $response ) ) {
+			return '';
+		}
+
+		$body = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		return $body['localizedName'] ?? '';
 	}
 
 	/**
@@ -376,44 +417,37 @@ class WPTS_LinkedIn_Module {
 			$body_text = mb_substr( $body_text, 0, 2897 ) . '...';
 		}
 
+		$share_url = $values['url'] ?? get_permalink( $post->ID );
+
 		$payload = array(
 			'author'          => $this->get_author_urn(),
 			'lifecycleState'  => 'PUBLISHED',
-			'specificContent' => array(
-				'com.linkedin.ugc.ShareContent' => array(
-					'shareCommentary' => array(
-						'text' => $body_text,
-					),
-					'shareMediaCategory' => 'ARTICLE',
-					'media' => array(
-						array(
-							'status'      => 'READY',
-							'originalUrl' => $values['url'] ?? get_permalink( $post->ID ),
-							'title'       => array(
-								'text' => $values['title'] ?? $post->post_title,
-							),
-						),
-					),
-				),
+			'visibility'      => 'PUBLIC',
+			'commentary'      => $body_text,
+			'distribution'    => array(
+				'feedDistribution'               => 'MAIN_FEED',
+				'targetEntities'                 => array(),
+				'thirdPartyDistributionChannels' => array(),
 			),
-			'visibility' => array(
-				'com.linkedin.ugc.MemberNetworkVisibility' => 'PUBLIC',
+			'content'         => array(
+				'article' => array(
+					'source'      => $share_url,
+					'title'       => $values['title'] ?? $post->post_title,
+				),
 			),
 		);
 
 		// Add image thumbnail if available.
 		$image_url = $values['image'] ?? '';
 		if ( ! empty( $image_url ) ) {
-			$payload['specificContent']['com.linkedin.ugc.ShareContent']['media'][0]['thumbnails'] = array(
-				array( 'url' => $image_url ),
-			);
+			$payload['content']['article']['thumbnail'] = $image_url;
 		}
 
-		$response = wp_remote_post( self::API_BASE . '/ugcPosts', array(
+		$response = wp_remote_post( 'https://api.linkedin.com/rest/posts', array(
 			'headers' => array(
-				'Authorization'  => 'Bearer ' . $token_data['access_token'],
-				'Content-Type'   => 'application/json',
-				'X-Restli-Protocol-Version' => '2.0.0',
+				'Authorization'    => 'Bearer ' . $token_data['access_token'],
+				'Content-Type'     => 'application/json',
+				'LinkedIn-Version' => '202402',
 			),
 			'body'    => wp_json_encode( $payload ),
 			'timeout' => 30,
@@ -436,7 +470,9 @@ class WPTS_LinkedIn_Module {
 			) );
 		}
 
-		return $body['id'] ?? '';
+		// The versioned Posts API returns the post URN in the x-restli-id header.
+		$post_urn = wp_remote_retrieve_header( $response, 'x-restli-id' );
+		return $post_urn ?: ( $body['id'] ?? '' );
 	}
 
 	/**

@@ -51,8 +51,22 @@ class WPTS_Plugin {
 		$post_handler = new WPTS_Post_Handler( $this->registry );
 		$post_handler->init();
 
+		// Run DB upgrades if needed.
+		$this->maybe_upgrade();
+
 		// Load textdomain.
 		add_action( 'init', array( $this, 'load_textdomain' ) );
+	}
+
+	/**
+	 * Run database upgrades when the plugin version changes.
+	 */
+	private function maybe_upgrade() {
+		$db_version = get_option( 'wpts_db_version', '0' );
+
+		if ( version_compare( $db_version, WPTS_Activity_Logger::DB_VERSION, '<' ) ) {
+			WPTS_Activity_Logger::create_table();
+		}
 	}
 
 	/**

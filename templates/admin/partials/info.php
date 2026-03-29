@@ -99,4 +99,13 @@ foreach ( $this->registry->get_active() as $slug => $module ) {
 		</table>
 	</div>
 
+	<!-- Debug: LinkedIn Org API Response -->
+	<?php $org_debug = get_option( 'wpts_linkedin_org_debug', '' ); ?>
+	<?php if ( ! empty( $org_debug ) ) : ?>
+	<div class="wpts-info-section">
+		<h2><?php esc_html_e( 'LinkedIn Org API Debug', 'wp-to-social' ); ?></h2>
+		<pre style="background:#f6f7f7;padding:12px;overflow-x:auto;font-size:12px;max-height:300px;"><?php echo esc_html( $org_debug ); ?></pre>
+	</div>
+	<?php endif; ?>
+
 </div>
