@@ -30,38 +30,61 @@ class WPTS_Post_Handler {
 	 * @param WP_Post $post       Post object.
 	 */
 	public function on_publish( $new_status, $old_status, $post ) {
+		$debug = array(
+			'time'       => current_time( 'mysql' ),
+			'post_id'    => $post->ID,
+			'post_type'  => $post->post_type,
+			'old_status' => $old_status,
+			'new_status' => $new_status,
+		);
+
 		if ( 'publish' !== $new_status ) {
+			$debug['stopped_at'] = 'not_publish';
+			update_option( 'wpts_handler_debug', wp_json_encode( $debug ) );
 			return;
 		}
 
-		// Avoid re-triggering on updates to already-published posts unless explicitly requested.
 		if ( 'publish' === $old_status ) {
+			$debug['stopped_at'] = 'already_published';
+			update_option( 'wpts_handler_debug', wp_json_encode( $debug ) );
 			return;
 		}
 
 		$eligible = get_option( 'wpts_eligible_post_types', array() );
+		$active   = $this->registry->get_active();
 
-		foreach ( $this->registry->get_active() as $slug => $module ) {
+		$debug['eligible']        = $eligible;
+		$debug['active_modules']  = array_keys( $active );
+
+		foreach ( $active as $slug => $module ) {
 			$platform_types = $eligible[ $slug ] ?? array();
 
 			if ( ! in_array( $post->post_type, $platform_types, true ) ) {
+				$debug['modules'][ $slug ] = 'skipped: post_type not eligible';
 				continue;
 			}
 
-			// Check if the user opted in via the checkbox.
 			$meta_key = '_wpts_post_to_' . $slug;
 			if ( ! get_post_meta( $post->ID, $meta_key, true ) ) {
+				$debug['modules'][ $slug ] = 'skipped: checkbox not checked';
 				continue;
 			}
 
-			// Prevent double-posting.
 			$already_posted_key = '_wpts_' . $slug . '_posted';
 			if ( get_post_meta( $post->ID, $already_posted_key, true ) ) {
+				$debug['modules'][ $slug ] = 'skipped: already posted';
 				continue;
 			}
 
+			$debug['modules'][ $slug ] = 'posting...';
+			update_option( 'wpts_handler_debug', wp_json_encode( $debug ) );
+
 			$this->post_to_platform( $slug, $module, $post );
+
+			$debug['modules'][ $slug ] = 'done';
 		}
+
+		update_option( 'wpts_handler_debug', wp_json_encode( $debug ) );
 	}
 
 	/**

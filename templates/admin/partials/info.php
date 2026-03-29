@@ -123,6 +123,32 @@ foreach ( $this->registry->get_active() as $slug => $module ) {
 	</div>
 	<?php endif; ?>
 
+	<!-- Debug: Post Handler -->
+	<?php $handler_debug = get_option( 'wpts_handler_debug', '' ); ?>
+	<?php if ( ! empty( $handler_debug ) ) : ?>
+	<div class="wpts-info-section">
+		<h2><?php esc_html_e( 'Post Handler Debug (last publish)', 'wp-to-social' ); ?></h2>
+		<pre style="background:#f6f7f7;padding:12px;overflow-x:auto;font-size:12px;max-height:300px;"><?php echo esc_html( $handler_debug ); ?></pre>
+	</div>
+	<?php endif; ?>
+
+	<!-- Debug: Activity Table -->
+	<?php
+	global $wpdb;
+	$table_exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->prefix . 'wpts_activity' ) );
+	?>
+	<div class="wpts-info-section">
+		<h2><?php esc_html_e( 'Activity Table', 'wp-to-social' ); ?></h2>
+		<p>
+			<?php if ( $table_exists ) : ?>
+				<span class="wpts-info-ok"><?php echo esc_html( $table_exists ); ?> — <?php esc_html_e( 'exists', 'wp-to-social' ); ?></span>
+			<?php else : ?>
+				<span class="wpts-info-warn"><?php esc_html_e( 'Table does NOT exist! The activity log cannot work.', 'wp-to-social' ); ?></span>
+			<?php endif; ?>
+			<?php echo ' | DB version: ' . esc_html( get_option( 'wpts_db_version', 'not set' ) ); ?>
+		</p>
+	</div>
+
 	<!-- Debug: LinkedIn Publish Response -->
 	<?php $pub_debug = get_option( 'wpts_linkedin_publish_debug', '' ); ?>
 	<?php if ( ! empty( $pub_debug ) ) : ?>
