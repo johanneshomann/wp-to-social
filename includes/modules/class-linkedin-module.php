@@ -488,6 +488,14 @@ class WPTS_LinkedIn_Module {
 			$payload['content']['article']['thumbnail'] = $image_url;
 		}
 
+		// Debug: store the payload so we can inspect what was sent.
+		update_option( 'wpts_linkedin_publish_debug', wp_json_encode( array(
+			'time'    => current_time( 'mysql' ),
+			'post_id' => $post->ID,
+			'author'  => $payload['author'],
+			'payload' => $payload,
+		) ) );
+
 		$response = wp_remote_post( 'https://api.linkedin.com/rest/posts', array(
 			'headers' => array(
 				'Authorization'    => 'Bearer ' . $token_data['access_token'],
@@ -499,11 +507,26 @@ class WPTS_LinkedIn_Module {
 		) );
 
 		if ( is_wp_error( $response ) ) {
+			update_option( 'wpts_linkedin_publish_debug', wp_json_encode( array(
+				'time'  => current_time( 'mysql' ),
+				'error' => 'WP_Error: ' . $response->get_error_message(),
+			) ) );
 			return $response;
 		}
 
-		$code = wp_remote_retrieve_response_code( $response );
-		$body = json_decode( wp_remote_retrieve_body( $response ), true );
+		$code     = wp_remote_retrieve_response_code( $response );
+		$raw_body = wp_remote_retrieve_body( $response );
+		$body     = json_decode( $raw_body, true );
+
+		// Debug: store the full API response.
+		update_option( 'wpts_linkedin_publish_debug', wp_json_encode( array(
+			'time'    => current_time( 'mysql' ),
+			'post_id' => $post->ID,
+			'author'  => $payload['author'],
+			'status'  => $code,
+			'body'    => $body,
+			'headers' => wp_remote_retrieve_header( $response, 'x-restli-id' ),
+		) ) );
 
 		if ( $code < 200 || $code >= 300 ) {
 			$message = $body['message'] ?? wp_remote_retrieve_response_message( $response );

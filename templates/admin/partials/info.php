@@ -123,4 +123,13 @@ foreach ( $this->registry->get_active() as $slug => $module ) {
 	</div>
 	<?php endif; ?>
 
+	<!-- Debug: LinkedIn Publish Response -->
+	<?php $pub_debug = get_option( 'wpts_linkedin_publish_debug', '' ); ?>
+	<?php if ( ! empty( $pub_debug ) ) : ?>
+	<div class="wpts-info-section">
+		<h2><?php esc_html_e( 'LinkedIn Publish Debug (last attempt)', 'wp-to-social' ); ?></h2>
+		<pre style="background:#f6f7f7;padding:12px;overflow-x:auto;font-size:12px;max-height:300px;"><?php echo esc_html( $pub_debug ); ?></pre>
+	</div>
+	<?php endif; ?>
+
 </div>
