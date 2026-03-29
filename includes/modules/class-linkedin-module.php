@@ -116,7 +116,7 @@ class WPTS_LinkedIn_Module {
 			'redirect_uri'  => $this->get_redirect_uri(),
 			'state'         => $state,
 			'scope'         => $this->is_org_posting_enabled()
-				? 'openid profile w_member_social r_organization_social w_organization_social'
+				? 'openid profile w_member_social r_organization_social w_organization_social r_organization_admin rw_organization_admin'
 				: 'openid profile w_member_social',
 		);
 
@@ -222,32 +222,30 @@ class WPTS_LinkedIn_Module {
 			'LinkedIn-Version' => '202603',
 		);
 
-		// Step 1: Get organization ACLs for the authenticated user.
+		$debug = array();
+
+		// Try organizationAcls first (Community Management API).
 		$response = wp_remote_get( 'https://api.linkedin.com/rest/organizationAcls?q=roleAssignee', array(
 			'headers' => $headers,
 			'timeout' => 15,
 		) );
 
-		if ( is_wp_error( $response ) ) {
-			update_option( 'wpts_linkedin_org_debug', 'WP_Error: ' . $response->get_error_message() );
-			return array();
-		}
+		$status_code = is_wp_error( $response ) ? 0 : wp_remote_retrieve_response_code( $response );
+		$body        = is_wp_error( $response ) ? null : json_decode( wp_remote_retrieve_body( $response ), true );
 
-		$raw_body    = wp_remote_retrieve_body( $response );
-		$status_code = wp_remote_retrieve_response_code( $response );
-		$body        = json_decode( $raw_body, true );
-
-		// Store debug info so we can see what LinkedIn returned.
-		update_option( 'wpts_linkedin_org_debug', wp_json_encode( array(
-			'status' => $status_code,
+		$debug['organizationAcls'] = array(
+			'status' => is_wp_error( $response ) ? $response->get_error_message() : $status_code,
 			'body'   => $body,
-		) ) );
+		);
 
-		if ( empty( $body['elements'] ) || ! is_array( $body['elements'] ) ) {
-			return array();
+		// If organizationAcls fails (403), try adAccountUsers → adAccounts → org (Advertising API path).
+		if ( $status_code !== 200 || empty( $body['elements'] ) ) {
+			$orgs = $this->fetch_organizations_via_admin( $access_token, $headers, $debug );
+			update_option( 'wpts_linkedin_org_debug', wp_json_encode( $debug ) );
+			return $orgs;
 		}
 
-		// Step 2: Extract org IDs and fetch each organization's name.
+		// Extract org IDs from ACLs and fetch names.
 		$orgs = array();
 		foreach ( $body['elements'] as $element ) {
 			$org_urn = $element['organization'] ?? '';
@@ -256,6 +254,53 @@ class WPTS_LinkedIn_Module {
 				$org_id   = $matches[1];
 				$org_name = $this->fetch_organization_name( $access_token, $org_id );
 
+				$orgs[] = array(
+					'id'   => $org_id,
+					'name' => $org_name ?: __( 'Organization', 'wp-to-social' ) . ' ' . $org_id,
+				);
+			}
+		}
+
+		update_option( 'wpts_linkedin_org_debug', wp_json_encode( $debug ) );
+		return $orgs;
+	}
+
+	/**
+	 * Fallback: fetch organizations via the organizationsLookup admin endpoint.
+	 *
+	 * Uses r_organization_admin (granted by Advertising API) to find orgs
+	 * where the authenticated member is an admin.
+	 *
+	 * @param string $access_token Access token.
+	 * @param array  $headers      Request headers.
+	 * @param array  &$debug       Debug array (by reference).
+	 * @return array Array of [ 'id' => org_id, 'name' => org_name ].
+	 */
+	private function fetch_organizations_via_admin( $access_token, $headers, &$debug ) {
+		// Use the admin lookup endpoint.
+		$response = wp_remote_get( 'https://api.linkedin.com/rest/organizationsLookup?q=admin', array(
+			'headers' => $headers,
+			'timeout' => 15,
+		) );
+
+		$status_code = is_wp_error( $response ) ? 0 : wp_remote_retrieve_response_code( $response );
+		$body        = is_wp_error( $response ) ? null : json_decode( wp_remote_retrieve_body( $response ), true );
+
+		$debug['organizationsLookup'] = array(
+			'status' => is_wp_error( $response ) ? $response->get_error_message() : $status_code,
+			'body'   => $body,
+		);
+
+		if ( $status_code !== 200 || empty( $body['elements'] ) ) {
+			return array();
+		}
+
+		$orgs = array();
+		foreach ( $body['elements'] as $element ) {
+			$org_id   = $element['id'] ?? '';
+			$org_name = $element['localizedName'] ?? '';
+
+			if ( ! empty( $org_id ) ) {
 				$orgs[] = array(
 					'id'   => $org_id,
 					'name' => $org_name ?: __( 'Organization', 'wp-to-social' ) . ' ' . $org_id,
