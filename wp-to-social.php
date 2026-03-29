@@ -30,6 +30,7 @@ require_once WPTS_PLUGIN_DIR . 'includes/admin/class-admin.php';
 require_once WPTS_PLUGIN_DIR . 'includes/admin/class-settings-page.php';
 require_once WPTS_PLUGIN_DIR . 'includes/admin/class-activity-page.php';
 require_once WPTS_PLUGIN_DIR . 'includes/admin/class-meta-box.php';
+require_once WPTS_PLUGIN_DIR . 'includes/class-updater.php';
 require_once WPTS_PLUGIN_DIR . 'includes/class-plugin.php';
 
 register_activation_hook( __FILE__, array( 'WPTS_Plugin', 'activate' ) );

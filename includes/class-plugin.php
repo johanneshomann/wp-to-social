@@ -54,6 +54,10 @@ class WPTS_Plugin {
 		// Run DB upgrades if needed.
 		$this->maybe_upgrade();
 
+		// GitHub update checker.
+		$updater = new WPTS_Updater();
+		$updater->init();
+
 		// Load textdomain.
 		add_action( 'init', array( $this, 'load_textdomain' ) );
 	}

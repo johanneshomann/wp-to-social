@@ -24,7 +24,22 @@ foreach ( $this->registry->get_active() as $slug => $module ) {
 			</tr>
 			<tr>
 				<th><?php esc_html_e( 'Version', 'wp-to-social' ); ?></th>
-				<td><?php echo esc_html( WPTS_VERSION ); ?></td>
+				<td>
+					<?php echo esc_html( WPTS_VERSION ); ?>
+					<?php
+					$latest_release = get_transient( 'wpts_github_release' );
+					if ( $latest_release && ! empty( $latest_release['tag_name'] ) ) :
+						$latest_version = ltrim( $latest_release['tag_name'], 'v' );
+						if ( version_compare( $latest_version, WPTS_VERSION, '>' ) ) :
+					?>
+						<span class="wpts-info-warn" style="margin-left:8px;">
+							<?php printf( esc_html__( 'Update available: %s', 'wp-to-social' ), esc_html( $latest_version ) ); ?>
+						</span>
+					<?php elseif ( version_compare( $latest_version, WPTS_VERSION, '=' ) ) : ?>
+						<span class="wpts-info-ok" style="margin-left:8px;"><?php esc_html_e( 'Up to date', 'wp-to-social' ); ?></span>
+					<?php endif; ?>
+					<?php endif; ?>
+				</td>
 			</tr>
 			<tr>
 				<th><?php esc_html_e( 'License', 'wp-to-social' ); ?></th>
