@@ -3,7 +3,7 @@
  * Plugin Name: WP to Social
  * Plugin URI:  https://github.com/johanneshomann/wp-to-social
  * Description: Post WordPress content to social media platforms. Supports LinkedIn and Instagram.
- * Version:     1.5.0
+ * Version:     1.6.0
  * Author:      Johannes Homann
  * License:     GPL-2.0-or-later
  * Text Domain: wp-to-social
@@ -14,7 +14,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'WPTS_VERSION', '1.5.0' );
+define( 'WPTS_VERSION', '1.6.0' );
 define( 'WPTS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WPTS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'WPTS_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
